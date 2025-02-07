@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Provincia Talca</title>
+    <link rel="stylesheet" href="static\css\header.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="menu-wrapper">
+                <button class="menu-button" onclick="toggleMenu()">Menú</button>
+                <div id="menu-content" class="menu-content">
+                    <a href="/">Inicio</a>
+                    <a href="/subida">Tablas</a>
+                    <a href="/chart">Graficos</a>
+                </div>
+            </div>
+            <div class="logo">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLFLZ6vwitDYKIRg1VrBWdZ3gjevCzeD3wag&s" alt="Logo">
+            </div>
+            <h1>Servicio de Salud Maule</h1>
+            <hr class="divider">
+        </header>
+
+        <main>
+            <!-- Incrustar el mapa generado por folium -->
+            <iframe src="/maule" width="100%" height="600" style="border:none;"></iframe>
+        </main>
+    </div>
+
+    <script src="static\js\script.js"></script>
+</body>
+</html>

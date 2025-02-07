@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Archivos</title>
+    <link rel="stylesheet" href="static/css/header.css">
+    <link rel="stylesheet" href="static/css/tablas.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="menu-wrapper">
+                <button class="menu-button" onclick="toggleMenu()">Menú</button>
+                <div id="menu-content" class="menu-content">
+                    <a href="/">Inicio</a>
+                    <a href="/subida">Tablas</a>
+                    <a href="/mapa">Mapa</a>
+                    <a href="/chart">Gráficos</a>
+                </div>
+            </div>
+            <div class="logo">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLFLZ6vwitDYKIRg1VrBWdZ3gjevCzeD3wag&s" alt="Logo">
+            </div>
+            <h1>Servicio de Salud Maule</h1>
+            <hr class="divider">
+        </header>
+        <main>
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                <label class="btn custom-file-upload" for="files">Elegir Archivos</label>
+                <input type="file" id="files" name="files[]" multiple accept=".xlsx, .xls">
+                <button class="btn btn-primary" type="submit">Subir y Procesar</button>
+                <a id="filtroButton" href="/filtro" class="btn btn-secondary" style="display: none;">Ir al Filtro</a>
+            </form>
+
+            <div id="file-names" class="file-names"></div>
+
+            <div id="alert-container"></div> <!-- Contenedor para las alertas -->
+
+            <!-- Contenedor para mostrar la tabla -->
+            <div id="tabla-container" style="display: none; margin-top: 20px;">
+                <button id="volverPrincipal" class="btn btn-secondary" style="display: none; margin-bottom: 10px;">Volver a Tabla Principal</button>
+                <div id="tabla-resultados" style="display: none;">
+                    <table class="table">
+                        <!-- Tabla -->
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
+        <script>
+            const form = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('files');
+            const fileNamesContainer = document.getElementById('file-names');
+            const tablaContainer = document.getElementById('tabla-container');
+            const tablaResultados = document.getElementById('tabla-resultados');
+            let tablaActual = null;
+            let ultimaTabla = null;
+            let tablasPrincipales = [];
+            let botonesCreados = [];
+
+            async function obtenerTabla(tableName) {
+                try {
+                    const response = await fetch(`/get_table?table_name=${encodeURIComponent(tableName)}`);
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        const volverPrincipal = document.getElementById('volverPrincipal');
+                        const tablaResultados = document.getElementById('tabla-resultados');
+                        tablaResultados.innerHTML = result.table;
+                        tablaActual = tableName; // tabla actual
+                        // tablasPrincipales = ['principalOperatividad', 'principalAfectacionC'];
+
+                        if (!tablasPrincipales.includes(tablaActual)){
+                            volverPrincipal.style.display = 'inline-block';
+
+                            botonesCreados.forEach((btn) => {
+                                btn.style.display = 'none';
+                            });
+                        }
+
+                        ultimaTabla = tablasPrincipales.includes(tablaActual) ? tablaActual : ultimaTabla;
+
+                    } else {
+                        showAlert(result.error || 'Error al obtener la tabla.', 'danger');
+                    }
+                } catch (err) {
+                    // showAlert('Ocurrió un error al intentar obtener la tabla.', 'danger');
+                }
+            }
+
+            function crearBotonesTablas() {
+                const tablaContainer = document.getElementById('tabla-container');
+
+                tablasPrincipales.forEach((tablaName) => {
+                    const btn = document.createElement('button'); // Crear el botón
+                    btn.id = `btn${tablaName}`; // Asignar un id único
+                    btn.className = 'btn btn-secondary'; // Asignar las clases de estilo
+                    btn.style.margin = '0px 10px 10px 0px'; // Establecer el estilo en línea
+                    let botonTexto = tablaName.replace('principal', '').trim();  // Eliminar "principal" y los posibles espacios extra
+                    btn.innerText = `Mostrar Tabla ${botonTexto}`; // Texto del botón
+
+                    btn.addEventListener('click', () => {
+                        obtenerTabla(tablaName);
+                        const tablaResultados = document.getElementById('tabla-resultados');
+
+                        if (tablaResultados.style.display === 'block' && tablaActual == tablaName) {
+                            tablaResultados.style.display = 'none';
+                        } else {
+                            tablaResultados.style.display = 'block';
+                        }
+                    });
+                        
+                    if (tablaContainer.firstChild) {
+                        tablaContainer.insertBefore(btn, tablaContainer.firstChild);
+                    } else {
+                        tablaContainer.appendChild(btn);
+                    }
+
+                    // Almacenar el botón en el array
+                    botonesCreados.push(btn);
+                });
+            }
+
+            // Evento para volver a la tabla principal
+            document.getElementById('volverPrincipal').addEventListener('click', () => {
+                obtenerTabla(ultimaTabla);
+                document.getElementById('volverPrincipal').style.display = 'none';
+
+                botonesCreados.forEach((btn) => {
+                    btn.style.display = 'inline-block';  // Mostrar cada botón individualmente
+                });
+            });
+
+            // Evento para mostrar la tabla después de la carga del archivo
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showAlert(result.message || 'Archivo subido correctamente.', 'success');
+                        filtroButton.style.display = 'inline-block';
+
+                        if (result.tablaContainer) {
+                            tablaContainer.style.display = 'block';
+                        } else {
+                            tablaContainer.style.display = 'none';
+                        }
+
+                        result.tablasPrincipales.forEach(valor => {
+                            tablasPrincipales.push(valor);
+                        });
+
+                        crearBotonesTablas();
+                        
+                    } else {
+                        showAlert(result.error || 'Error al subir el archivo.', 'danger');
+                        tablaContainer.style.display = 'none';
+                    }
+                } catch (err) {
+                    showAlert('Ocurrió un error inesperado.', 'danger');
+                    tablaContainer.style.display = 'none';
+                }
+            });
+
+            // Evento delegado para detectar clics en las celdas
+            document.getElementById('tabla-resultados').addEventListener('click', async (e) => {
+                if (e.target.tagName === 'TD' && e.target.innerText !== '0') {
+                    const row = e.target.parentElement;
+                    const tipoEstablecimiento = row.children[0].innerText;
+                    const operatividad = e.target.closest('table').querySelector(`th:nth-child(${e.target.cellIndex + 1})`).innerText;
+
+                    const tableName = `${tipoEstablecimiento}_${operatividad}`.toUpperCase();
+                    obtenerTabla(tableName);
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                const files = fileInput.files;
+
+                // Verifica si se ha seleccionado más de un archivo
+                if (files.length > 1) {
+                    showAlert('Solo se puede subir un archivo.', 'danger');
+                    fileInput.value = '';  // Resetea la selección de archivos
+                    fileNamesContainer.innerHTML = ''; // Limpia la lista de archivos
+                } else if (files.length > 0) {
+                    const fileNames = Array.from(files)
+                        .map(file => `<li>${file.name}</li>`)
+                        .join('');
+                    fileNamesContainer.innerHTML = `
+                        <p><strong>Archivo seleccionado:</strong></p>
+                        <ul>${fileNames}</ul>
+                    `;
+                } else {
+                    fileNamesContainer.innerHTML = '';
+                }
+            });
+
+            // Función para mostrar alertas
+            function showAlert(message, type = 'success') {
+                $('#alert-container').html(
+                    `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="close" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`
+                );
+
+                $('.alert .close').on('click', function() {
+                    const alertElement = $(this).closest('.alert');
+                    alertElement.addClass('hide');
+                    setTimeout(() => {
+                        alertElement.remove();
+                    }, 500);
+                });
+            }
+
+            function toggleMenu() {
+                $('#menu-content').toggle(); // Cambia la visibilidad del menú
+            }
+
+        </script>
+    </div>
+</body>
+</html>
