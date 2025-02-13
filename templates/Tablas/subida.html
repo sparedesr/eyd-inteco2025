@@ -30,7 +30,7 @@
             <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
                 <label class="btn custom-file-upload" for="files">Elegir Archivos</label>
                 <input type="file" id="files" name="files[]" multiple accept=".xlsx, .xls">
-                <button class="btn btn-primary" type="submit">Subir y Procesar</button>
+                <button class="btn btn-primary" type="submit" id="submitBtn">Subir y Procesar</button>
                 <a id="filtroButton" href="/filtro" class="btn btn-secondary" style="display: none;">Ir al Filtro</a>
             </form>
 
@@ -93,8 +93,19 @@
 
             function crearBotonesTablas() {
                 const tablaContainer = document.getElementById('tabla-container');
-
+                // Verificar que el contenedor exista
+                if (!tablaContainer) {
+                    console.log("Contenedor no encontrado");
+                    return;
+                }
+                // Crear los nuevos botones
                 tablasPrincipales.forEach((tablaName) => {
+                    // Verificar si el botón ya existe
+                    const botonExistente = document.getElementById(`btn${tablaName}`);
+                    if (botonExistente) {
+                        return;  // Si el botón ya existe, no lo creamos de nuevo
+                    }
+
                     const btn = document.createElement('button'); // Crear el botón
                     btn.id = `btn${tablaName}`; // Asignar un id único
                     btn.className = 'btn btn-secondary'; // Asignar las clases de estilo
@@ -114,9 +125,9 @@
                     });
                         
                     if (tablaContainer.firstChild) {
-                        tablaContainer.insertBefore(btn, tablaContainer.firstChild);
+                        tablaContainer.insertBefore(btn, tablaContainer.firstChild); // Agregar al principio
                     } else {
-                        tablaContainer.appendChild(btn);
+                        tablaContainer.appendChild(btn); // Si el contenedor está vacío, añadir al final
                     }
 
                     // Almacenar el botón en el array
@@ -138,8 +149,10 @@
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(form);
+                const submitBtn = document.getElementById("submitBtn");
 
                 try {
+                    submitBtn.disabled = true;
                     const response = await fetch('/upload', {
                         method: 'POST',
                         body: formData
@@ -153,6 +166,7 @@
 
                         if (result.tablaContainer) {
                             tablaContainer.style.display = 'block';
+                            obtenerTabla(ultimaTabla);
                         } else {
                             tablaContainer.style.display = 'none';
                         }
@@ -162,6 +176,7 @@
                         });
 
                         crearBotonesTablas();
+                        submitBtn.disabled = false;
                         
                     } else {
                         showAlert(result.error || 'Error al subir el archivo.', 'danger');

@@ -1,56 +1,58 @@
 import pandas as pd
-from dash import Dash, html, dash_table, Input, Output, State
-import dash_bootstrap_components as dbc
 
 def crear_tabla_vias_acceso(archivo):
-    # Configuración para mostrar todas las filas y columnas
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
+    try:
+        tipos_operatividad = ['VIAS_NORMALES', 'VIAS_CON_DANOS_CON_ACCESO', 'SIN_ACCESO']
+        df_operativos = archivo[archivo['VIAS_DE_ACCESO'].isin(tipos_operatividad)]
 
-    # Cargar el archivo Excel
+        # Generar la tabla resumen
+        conteo_establecimientos = (
+            df_operativos.groupby(['TIPO_ESTABLECIMIENTO', 'VIAS_DE_ACCESO'])
+            .size()
+            .unstack(fill_value=0)
+        )
 
+        for tipo in tipos_operatividad:
+            if tipo not in conteo_establecimientos.columns:
+                conteo_establecimientos[tipo] = 0
 
-    # Filtrar los datos por el rango de horas especificado
+        conteo_establecimientos = conteo_establecimientos[['VIAS_NORMALES', 'VIAS_CON_DANOS_CON_ACCESO', 'SIN_ACCESO']]
+        conteo_establecimientos = conteo_establecimientos.reset_index()
+        conteo_establecimientos = conteo_establecimientos.rename_axis(None, axis=1)
 
+        # Convertir la tabla en HTML
+        conteo_establecimientos_html = conteo_establecimientos.to_html(classes="table table-striped", index=False, escape=False)
 
+        # Marcar celdas clicables con un atributo "data-clickable"
+        conteo_establecimientos_html = conteo_establecimientos_html.replace(
+            r'<td>([1-9][0-9]*)</td>',
+            r'<td data-clickable="true" style="cursor: pointer;">\1</td>'
+        )
 
+        # Usar un diccionario en lugar de una lista
+        tablas_Operatividad = {}
 
-    # Crear columna para clasificar los tipos de establecimientos
-    archivo['TIPO_ESTABLECIMIENTO'] = archivo['NOMBRE_ESTABLECIMIENTO'].str.extract(
-        '(HOSPITAL|POSTA|SUR|SAR|SAPU|CENTRO|MODULO)', expand=False)
+        # Almacenar la tabla resumen
+        tablas_Operatividad['principalVIAS_DE_ACCESO'] = conteo_establecimientos_html
 
-    # Diccionarios para almacenar los establecimientos por estado de vías de acceso
-    diccionario_vias_normales = {}
-    diccionario_vias_con_danos_acceso = {}
-    diccionario_vias_con_danos = {}
+        # Para cada tipo de operatividad, crear una tabla con los datos filtrados
+        for operatividad in tipos_operatividad:
+            for tipo_establecimiento in archivo['TIPO_ESTABLECIMIENTO'].unique():
+                # Filtrar el DataFrame por tipo de establecimiento y operatividad
+                df_filtrado = archivo[(archivo['TIPO_ESTABLECIMIENTO'] == tipo_establecimiento) & 
+                                (archivo['VIAS_DE_ACCESO'] == operatividad)]
+                
+                # Si el DataFrame no está vacío, proceder
+                if not df_filtrado.empty:
+                    columnas = ['NOMBRE_ESTABLECIMIENTO', 'VIAS_DE_ACCESO','DETALLE_VIAS_DE_ACCESO']
 
-    for _, row in archivo.iterrows():
-        tipo = row['TIPO_ESTABLECIMIENTO']
-        nombre = row['NOMBRE_ESTABLECIMIENTO']
-        vias = row['VIAS_DE_ACCESO']
-        detalle = row['DETALLE_VIAS_DE_ACCESO'] if pd.notna(row['DETALLE_VIAS_DE_ACCESO']) else "NO INFO"
-        
-        if tipo not in diccionario_vias_normales:
-            diccionario_vias_normales[tipo] = []
-            diccionario_vias_con_danos_acceso[tipo] = []
-            diccionario_vias_con_danos[tipo] = []
-        
-        if str(vias).strip().lower() == "VIAS_CON_DAÑOS_CON_ACCESO":
-            diccionario_vias_con_danos_acceso[tipo].append(f"{nombre} - Detalle: {detalle}")
-        elif str(vias).strip().lower() == "VIAS_CON_DAÑOS":
-            diccionario_vias_con_danos[tipo].append(f"{nombre} - Detalle: {detalle}")
-        else:
-            diccionario_vias_normales[tipo].append(nombre)
+                    # Convertir la tabla filtrada en HTML
+                    table_name = f"{tipo_establecimiento}_{operatividad}".upper()
+                    tablas_Operatividad[table_name] = df_filtrado[columnas].to_html(classes="table table-striped", index=False)
 
-    # Crear DataFrame para la tabla principal
-    datos = []
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        datos.append({
-            "Tipo de Instalación": tipo,
-            "Vías Normales": len(diccionario_vias_normales[tipo]),
-            "Vías con Daños con Acceso": len(diccionario_vias_con_danos_acceso[tipo]),
-            "Vías con Daños": len(diccionario_vias_con_danos[tipo]),
-        })
+        # Asegurarse de que las tablas HTML se devuelvan correctamente
+        return tablas_Operatividad
 
-    df_vias_acceso = pd.DataFrame(datos)
-    return df_vias_acceso
+    except Exception as e:
+        raise ValueError(f"Error al generar la tabla: {e}")
+

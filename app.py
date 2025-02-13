@@ -7,9 +7,29 @@ from unidecode import unidecode
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, jsonify, send_file, session
 from flask_session import Session
+from vehiculos import crear_tabla_vehiculos
+from boxes_de_atencion import crear_tabla_boxes
+from sapu import crear_tabla_sapu
+from servicios_de_apoyo import crear_tabla_servicios
+from medicamentosInsumos import crear_tabla_medicamentos
+from farmacia import crear_tabla_farmacia
+from recursosHumanos import crear_tabla_rrhh
+from pabellones import crear_tabla_pabellones
+from agua_potable import crear_tabla_agua
+from alcantarillado import crear_tabla_alcantarillado
+from urgencia import crear_tabla_urgencia
+from bodegasPNAC import crear_tabla_bodegas
+from energia import crear_tabla_energia
+from vias_de_acceso import crear_tabla_vias_acceso
+from telecomunicaciones import crear_tabla_teleco
+from gases_clinicos import crear_tabla_gases
+from vacunatorios import crear_tabla_vacunatorios
+from camas import crear_tabla_camas
+from UPC import crear_tabla_UPC
+from operatividad_provincias import crear_tabla_provincia
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
 app.secret_key = 'goku'
 app.config['SESSION_TYPE'] = 'filesystem'  # Guarda la sesión en archivos temporales
 Session(app)  # Activa Flask-Session
@@ -22,884 +42,7 @@ from flask import session
 
 
 
-curico_diccionario_operativos = {'curico' : []}
-curico_diccionario_inoperativos = {'curico' : []}
-curico_diccionario_semi = {'curico' : []}
 
-talca_diccionario_operativos = {'talca' : []}
-talca_diccionario_inoperativos = {'talca' : []}
-talca_diccionario_semi = {'talca' : []}
-
-linares_diccionario_operativos = {'linares' : []}
-linares_diccionario_inoperativos = {'linares' : []}
-linares_diccionario_semi = {'linares' : []}
-
-cauquenes_diccionario_operativos = {'cauquenes' : []}
-cauquenes_diccionario_inoperativos = {'cauquenes' : []}
-cauquenes_diccionario_semi = {'cauquenes' : []}
-
-curico_operativos = 0
-curico_inoperativos = 0
-curico_semioperativos = 0
-
-talca_operativos = 0
-talca_inoperativos = 0
-talca_semioperativos = 0
-
-linares_operativos = 0
-linares_inoperativos = 0
-linares_semioperativos = 0
-
-cauquenes_operativos = 0
-cauquenes_inoperativos = 0
-cauquenes_semioperativos = 0
-
-
-columna_de_interes1 = "BODEGAS_PNAC"
-hospital_diccionario_operativos = {f'bodega hospital': []}
-hospital_diccionario_no_operativos = {f'bodega hospital': []}
-hospital_diccionario_semi_operativos = {f'bodega hospital': []}
-
-centro_diccionario_operativos = {f'{columna_de_interes1} centro': []}
-centro_diccionario_no_operativos = {f'{columna_de_interes1} centro': []}
-centro_diccionario_semi_operativos = {f'{columna_de_interes1} centro': []}
-
-comunitario_diccionario_operativos = {f'{columna_de_interes1} comunitario': []}
-comunitario_diccionario_no_operativos = {f'{columna_de_interes1} comunitario': []}
-comunitario_diccionario_semi_operativos = {f'{columna_de_interes1} comunitario': []}
-
-psr_diccionario_operativos = {f'{columna_de_interes1} psr': []}
-psr_diccionario_no_operativos = {f'{columna_de_interes1} psr': []}
-psr_diccionario_semi_operativos = {f'{columna_de_interes1} psr': []}
-
-csmc_diccionario_operativos = {f'{columna_de_interes1} csmc': []}
-csmc_diccionario_no_operativos = {f'{columna_de_interes1} csmc': []}
-csmc_diccionario_semi_operativos = {f'{columna_de_interes1} csmc': []}
-
-sur_diccionario_operativos = {f'{columna_de_interes1} sur': []}
-sur_diccionario_no_operativos = {f'{columna_de_interes1} sur': []}
-sur_diccionario_semi_operativos = {f'{columna_de_interes1} sur': []}
-
-sar_diccionario_operativos = {f'{columna_de_interes1} sar': []}
-sar_diccionario_no_operativos = {f'{columna_de_interes1} sar': []}
-sar_diccionario_semi_operativos = {f'{columna_de_interes1} sar': []}
-
-sapu_diccionario_operativos = {f'{columna_de_interes1} sapu': []}
-sapu_diccionario_no_operativos = {f'{columna_de_interes1} sapu': []}
-sapu_diccionario_semi_operativos = {f'{columna_de_interes1} sapu': []}
-
-hospital_contador_operativos = 0
-hospital_contador_no_operativos = 0
-hospital_contador_semi_operativos = 0
-
-centro_contador_operativos = 0
-centro_contador_no_operativos = 0
-centro_contador_semi_operativos = 0
-
-comunitario_contador_operativos = 0
-comunitario_contador_no_operativos = 0
-comunitario_contador_semi_operativos = 0
-
-psr_contador_operativos = 0
-psr_contador_no_operativos = 0
-psr_contador_semi_operativos = 0
-
-csmc_contador_operativos = 0
-csmc_contador_no_operativos = 0
-csmc_contador_semi_operativos = 0
-
-sur_contador_operativos = 0
-sur_contador_no_operativos = 0
-sur_contador_semi_operativos = 0
-
-sar_contador_operativos = 0
-sar_contador_no_operativos = 0
-sar_contador_semi_operativos = 0
-
-sapu_contador_operativos = 0
-sapu_contador_no_operativos = 0
-sapu_contador_semi_operativos = 0
-def crear_tabla_bodegas(archivo):
-  pd.set_option('display.max_rows', None)  # Muestra todas las filas
-  pd.set_option('display.max_columns', None)  # Muestra todas las columnas
-
-
-  data = []
-
-
-
-
-
-  def separacion_instalaciones(tipoDeInstalacion):
-      data = {
-          'ID_EDAN': [],
-          'NOMBRE_ESTABLECIMIENTO': [],
-          'COMUNA': [],
-          f'{columna_de_interes1}': [],
-      }
-      for _, raw in archivo.iterrows():
-
-          edan = raw['ID_EDAN']
-          nombre = raw['NOMBRE_ESTABLECIMIENTO']
-          comuna = raw['COMUNA']
-          operatividad = raw[f'{columna_de_interes1}']
-          tipo = tipoDeInstalacion
-
-          if tipo in nombre:
-              data['ID_EDAN'].append(edan)
-              data['NOMBRE_ESTABLECIMIENTO'].append(nombre)
-              data['COMUNA'].append(comuna)
-              data[f'{columna_de_interes1}'].append(operatividad)
-
-      datos = pd.DataFrame(data)
-      return datos
-  hospital=separacion_instalaciones('HOSPITAL')
-  centro=separacion_instalaciones('CENTRO_DE_SALUD_FAMILIAR')
-  comunitario=separacion_instalaciones('CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR')
-  psr=separacion_instalaciones('POSTA_DE_SALUD_RURAL')
-  csmc=separacion_instalaciones('CENTRO_DE_SALUD_MENTAL_COMUNITARIO')
-  sur=separacion_instalaciones('SUR')
-  sar=separacion_instalaciones('SAR')
-  sapu=separacion_instalaciones('SAPU')
-
-  datos = {
-      'Tipo de Establecimientos': [],
-      'Operativos': [],
-      'No Operativos': [],
-      'Semi Operativos': [],
-  }
-
-
-  def recolectar_datos_establecimientos(nombre):
-    global hospital_contador_operativos, hospital_contador_no_operativos, hospital_contador_semi_operativos, hospital_diccionario_operativos, hospital_diccionario_no_operativos, hospital_diccionario_semi_operativos
-    global centro_contador_operativos, centro_contador_no_operativos, centro_contador_semi_operativos, centro_diccionario_operativos, centro_diccionario_no_operativos, centro_diccionario_semi_operativos
-    global comunitario_contador_operativos, comunitario_contador_no_operativos, comunitario_contador_semi_operativos, comunitario_diccionario_operativos, comunitario_diccionario_no_operativos, comunitario_diccionario_semi_operativos
-    global psr_contador_operativos, psr_contador_no_operativos, psr_contador_semi_operativos, psr_diccionario_operativos, psr_diccionario_no_operativos, psr_diccionario_semi_operativos
-    global csmc_contador_operativos, csmc_contador_no_operativos, csmc_contador_semi_operativos, csmc_diccionario_operativos, csmc_diccionario_no_operativos, csmc_diccionario_semi_operativos
-    global sur_contador_operativos, sur_contador_no_operativos, sur_contador_semi_operativos, sur_diccionario_operativos, sur_diccionario_no_operativos, sur_diccionario_semi_operativos
-    global sar_contador_operativos, sar_contador_no_operativos, sar_contador_semi_operativos, sar_diccionario_operativos, sar_diccionario_no_operativos, sar_diccionario_semi_operativos
-    global sapu_contador_operativos, sapu_contador_no_operativos, sapu_contador_semi_operativos, sapu_diccionario_operativos, sapu_diccionario_no_operativos, sapu_diccionario_semi_operativos
-
-
-
-    for _, raw in nombre.iterrows():
-
-      if raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_operativos+=1
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_no_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_semi_operativos+=1
-
-
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_operativos+=1
- 
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_no_operativos+=1
- 
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_semi_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_no_operativos+=1
-        
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_semi_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_no_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_semi_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_no_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_semi_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_no_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_semi_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'NO_OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_no_operativos+=1
-
-      elif raw[f'{columna_de_interes1}'] == 'SEMI_OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_semi_operativos+=1
-
-    return None
-  recolectar_datos_establecimientos(hospital)
-  print(hospital_contador_operativos)
-  recolectar_datos_establecimientos(centro)
-  recolectar_datos_establecimientos(comunitario)
-  recolectar_datos_establecimientos(psr)
-  recolectar_datos_establecimientos(sur)
-  recolectar_datos_establecimientos(sar)
-  recolectar_datos_establecimientos(sapu)
-  datos['Tipo de Establecimientos'].append('Hospital')
-  datos['Operativos'].append(hospital_contador_operativos)
-  datos['No Operativos'].append(hospital_contador_no_operativos)
-  datos['Semi Operativos'].append(hospital_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Centro de Salud Familiar')
-  datos['Operativos'].append(centro_contador_operativos)
-  datos['No Operativos'].append(centro_contador_no_operativos)
-  datos['Semi Operativos'].append(centro_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Centro Comunitario de Salud Familiar')
-  datos['Operativos'].append(comunitario_contador_operativos)
-  datos['No Operativos'].append(comunitario_contador_no_operativos)
-  datos['Semi Operativos'].append(comunitario_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Posta de Salud Rural')
-  datos['Operativos'].append(psr_contador_operativos)
-  datos['No Operativos'].append(psr_contador_no_operativos)
-  datos['Semi Operativos'].append(psr_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SUR')
-  datos['Operativos'].append(sur_contador_operativos)
-  datos['No Operativos'].append(sur_contador_no_operativos)
-  datos['Semi Operativos'].append(sur_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SAR')
-  datos['Operativos'].append(sar_contador_operativos)
-  datos['No Operativos'].append(sar_contador_no_operativos)
-  datos['Semi Operativos'].append(sar_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SAPU')
-  datos['Operativos'].append(sapu_contador_operativos)
-  datos['No Operativos'].append(sapu_contador_no_operativos)
-  datos['Semi Operativos'].append(sapu_contador_semi_operativos)
-  tabla = pd.DataFrame(datos)
-  diccionario = {}
-  tabla_html = tabla.to_html(classes="table table-striped", index=False)
-  diccionario['principalBodegas'] = tabla_html
-  return diccionario
-
-
-def crear_tabla_provincia(archivo):
-  pd.set_option('display.max_rows', None)  # Muestra todas las filas
-  pd.set_option('display.max_columns', None)  # Muestra todas las columnas
-  data = []
-
-  def separacion_instalaciones(tipoDeInstalacion):
-      data = {
-          'ID_EDAN': [],
-          'NOMBRE_ESTABLECIMIENTO': [],
-          'COMUNA': [],
-          'OPERATIVIDAD_ESTABLECIMIENTO': [],
-      }
-      for _, raw in archivo.iterrows():
-
-          edan = raw['ID_EDAN']
-          nombre = raw['NOMBRE_ESTABLECIMIENTO']
-          comuna = raw['COMUNA']
-          operatividad = raw['OPERATIVIDAD_ESTABLECIMIENTO']
-          tipo = tipoDeInstalacion
-
-          if tipo in nombre:
-              data['ID_EDAN'].append(edan)
-              data['NOMBRE_ESTABLECIMIENTO'].append(nombre)
-              data['COMUNA'].append(comuna)
-              data['OPERATIVIDAD_ESTABLECIMIENTO'].append(operatividad)
-
-      datos = pd.DataFrame(data)
-      return datos
-
-  hospital=separacion_instalaciones('HOSPITAL')
-  centro=separacion_instalaciones('CENTRO_DE_SALUD_FAMILIAR')
-  comunitario=separacion_instalaciones('CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR')
-  psr=separacion_instalaciones('POSTA_DE_SALUD_RURAL')
-  csmc=separacion_instalaciones('CENTRO_DE_SALUD_MENTAL_COMUNITARIO')
-  sur=separacion_instalaciones('SUR')
-  sar=separacion_instalaciones('SAR')
-  sapu=separacion_instalaciones('SAPU')
-
-  datos = {
-      'Provincias': [],
-      'Operativos': [],
-      'Inoperativos': [],
-      'Semioperativos': [],
-  }
-
-
-
-
-
-  def recolectar_datos_establecimientos(nombre):
-    global curico_operativos, curico_inoperativos, curico_semioperativos
-    global talca_operativos, talca_inoperativos, talca_semioperativos
-    global linares_operativos, linares_inoperativos, linares_semioperativos
-    global cauquenes_operativos, cauquenes_inoperativos, cauquenes_semioperativos
-
-    global curico_diccionario_operativos, curico_diccionario_inoperativos, curico_diccionario_semi
-    global talca_diccionario_operativos, talca_diccionario_inoperativos, talca_diccionario_semi
-    global linares_diccionario_operativos, linares_diccionario_inoperativos, linares_diccionario_semi
-    global cauquenes_diccionario_operativos, cauquenes_diccionario_inoperativos, cauquenes_diccionario_semi
-    for _, raw in nombre.iterrows():
-
-      if raw['COMUNA'] == "CURICO" or raw['COMUNA'] == 'ROMERAL' or raw['COMUNA'] == 'TENO' or raw['COMUNA'] == 'MOLINA' or raw['COMUNA'] == 'SAGRADA_FAMILIA' or raw['COMUNA'] == 'RAUCO' or raw['COMUNA'] == 'HUALAÑE' or raw['COMUNA'] == 'HUALANE' or raw['COMUNA'] == 'LICANTEN' or raw['COMUNA'] == 'VICHUQUEN' :
-
-        if raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'INOPERATIVO':
-          curico_inoperativos += 1
-          curico_diccionario_inoperativos['curico'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'SEMIOPERATIVO':
-          curico_semioperativos += 1
-          curico_diccionario_semi['curico'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'OPERATIVO':
-          curico_operativos += 1
-          curico_diccionario_operativos['curico'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-
-      if raw['COMUNA'] == "TALCA" or raw['COMUNA'] =='EMPEDRADO' or raw['COMUNA'] =='PELARCO' or raw['COMUNA'] =='PENCAHUE' or raw['COMUNA'] =='RIO_CLARO' or raw['COMUNA'] =='SAN_CLEMENTE' or raw['COMUNA'] =='SAN_RAFAEL' or raw['COMUNA'] =='CONSTITUCION' or raw['COMUNA'] =='CUREPTO' or raw['COMUNA'] =='MAULE' :
-        if raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'INOPERATIVO':
-          talca_inoperativos += 1
-          talca_diccionario_inoperativos['talca'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'SEMIOPERATIVO':
-          talca_semioperativos += 1
-          talca_diccionario_semi['talca'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'OPERATIVO':
-          talca_operativos += 1
-          talca_diccionario_operativos['talca'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-      if raw['COMUNA'] =="LINARES" or raw['COMUNA'] =='COLBUN' or raw['COMUNA'] =='LONGAVI' or raw['COMUNA'] =='PARRAL' or raw['COMUNA'] =='RETIRO' or raw['COMUNA'] =='SAN_JAVIER' or raw['COMUNA'] =='VILLA_ALEGRE' or raw['COMUNA'] =='YERBAS_BUENAS':
-        if raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'INOPERATIVO':
-          linares_inoperativos += 1
-          linares_diccionario_inoperativos['linares'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'SEMIOPERATIVO':
-          linares_semioperativos += 1
-          linares_diccionario_semi['linares'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'OPERATIVO':
-          linares_operativos += 1
-          linares_diccionario_operativos['linares'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-      if  raw['COMUNA'] =="CAUQUENES" or raw['COMUNA'] =='CHANCO' or raw['COMUNA'] =='PELLUHUE':
-        if raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'INOPERATIVO':
-          cauquenes_inoperativos += 1
-          cauquenes_diccionario_inoperativos['cauquenes'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'SEMIOPERATIVO':
-          cauquenes_semioperativos += 1
-          cauquenes_diccionario_semi['cauquenes'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-        elif raw['OPERATIVIDAD_ESTABLECIMIENTO'] == 'OPERATIVO':
-          cauquenes_operativos += 1
-          cauquenes_diccionario_operativos['cauquenes'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-    return None
-
-  recolectar_datos_establecimientos(hospital)
-  recolectar_datos_establecimientos(sur)
-  recolectar_datos_establecimientos(sar)
-  recolectar_datos_establecimientos(sapu)
-  recolectar_datos_establecimientos(centro)
-  recolectar_datos_establecimientos(comunitario)
-  recolectar_datos_establecimientos(psr)
-  datos['Provincias'].append('Curicó')
-  datos['Operativos'].append(curico_operativos)
-  datos['Inoperativos'].append(curico_inoperativos)
-  datos['Semioperativos'].append(curico_semioperativos)
-
-  datos['Provincias'].append('Talca')
-  datos['Operativos'].append(talca_operativos)
-  datos['Inoperativos'].append(talca_inoperativos)
-  datos['Semioperativos'].append(talca_semioperativos)
-
-  datos['Provincias'].append('Linares')
-  datos['Operativos'].append(linares_operativos)
-  datos['Inoperativos'].append(linares_inoperativos)
-  datos['Semioperativos'].append(linares_semioperativos)
-
-  datos['Provincias'].append('Cauquenes')
-  datos['Operativos'].append(cauquenes_operativos)
-  datos['Inoperativos'].append(cauquenes_inoperativos)
-  datos['Semioperativos'].append(cauquenes_semioperativos)
-
-  tabla = pd.DataFrame(datos)
-  diccionario = {}
-  tabla_html = tabla.to_html(classes="table table-striped", index=False)
-  diccionario['principalProvincia'] = tabla_html
-  return diccionario
-
-def crear_tabla_vias_acceso(archivo):
-    # Configuración para mostrar todas las filas y columnas
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-
-    # Cargar el archivo Excel
-
-
-    # Filtrar los datos por el rango de horas especificado
-
-
-
-
-    # Crear columna para clasificar los tipos de establecimientos
-    archivo['TIPO_ESTABLECIMIENTO'] = archivo['NOMBRE_ESTABLECIMIENTO'].str.extract(
-        '(HOSPITAL|POSTA|SUR|SAR|SAPU|CENTRO|MODULO)', expand=False)
-
-    # Diccionarios para almacenar los establecimientos por estado de vías de acceso
-    diccionario_vias_normales = {}
-    diccionario_vias_con_danos_acceso = {}
-    diccionario_vias_con_danos = {}
-
-    for _, row in archivo.iterrows():
-        tipo = row['TIPO_ESTABLECIMIENTO']
-        nombre = row['NOMBRE_ESTABLECIMIENTO']
-        vias = row['VIAS_DE_ACCESO']
-        detalle = row['DETALLE_VIAS_DE_ACCESO'] if pd.notna(row['DETALLE_VIAS_DE_ACCESO']) else "NO INFO"
-        
-        if tipo not in diccionario_vias_normales:
-            diccionario_vias_normales[tipo] = []
-            diccionario_vias_con_danos_acceso[tipo] = []
-            diccionario_vias_con_danos[tipo] = []
-        
-        if str(vias).strip().lower() == "VIAS_CON_DAÑOS_CON_ACCESO":
-            diccionario_vias_con_danos_acceso[tipo].append(f"{nombre} - Detalle: {detalle}")
-        elif str(vias).strip().lower() == "VIAS_CON_DAÑOS":
-            diccionario_vias_con_danos[tipo].append(f"{nombre} - Detalle: {detalle}")
-        else:
-            diccionario_vias_normales[tipo].append(nombre)
-
-    # Crear DataFrame para la tabla principal
-    datos = []
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        datos.append({
-            "Tipo de Instalación": tipo,
-            "Vías Normales": len(diccionario_vias_normales[tipo]),
-            "Vías con Daños con Acceso": len(diccionario_vias_con_danos_acceso[tipo]),
-            "Vías con Daños": len(diccionario_vias_con_danos[tipo]),
-        })
-
-    df_vias_acceso = pd.DataFrame(datos)
-    diccionario = {}
-    tabla_html = df_vias_acceso.to_html(classes="table table-striped", index=False)
-    diccionario['principalViasDeAcceso'] = tabla_html
-    return diccionario
-
-def crear_tabla_gases(archivo):
-    # Configuración para mostrar todas las filas y columnas
-    pd.set_option('display.max_rows', None)  # Muestra todas las filas
-    pd.set_option('display.max_columns', None)  # Muestra todas las columnas
-
-    # Cargar el archivo Excel
-
-
-
-
-    # Crear un DataFrame filtrado
-
-
-    # Crear columna para clasificar los tipos de establecimientos
-    archivo['TIPO_ESTABLECIMIENTO'] = archivo['NOMBRE_ESTABLECIMIENTO'].str.extract(
-        '(HOSPITAL|POSTA|SUR|SAR|SAPU|CENTRO|MODULO)', expand=False)
-
-    # Función para filtrar según el estado de gases clínicos
-    def separacion_gases_clinicos(estado_gases):
-        data = {
-            'ID_EDAN': [],
-            'NOMBRE_ESTABLECIMIENTO': [],
-            'TIPO_ESTABLECIMIENTO': [],
-            'GASES_CLINICOS': [],
-        }
-        for _, raw in archivo.iterrows():
-            edan = raw['ID_EDAN']
-            nombre = raw['NOMBRE_ESTABLECIMIENTO']
-            tipo = raw['TIPO_ESTABLECIMIENTO']
-            gases = raw['GASES_CLINICOS']
-
-            if estado_gases in gases:
-                data['ID_EDAN'].append(edan)
-                data['NOMBRE_ESTABLECIMIENTO'].append(nombre)
-                data['TIPO_ESTABLECIMIENTO'].append(tipo)
-                data['GASES_CLINICOS'].append(gases)
-
-        datos = pd.DataFrame(data)
-        return datos
-
-    # Filtrar los datos para las dos categorías de gases clínicos
-    gases_normal = separacion_gases_clinicos('SERVICIO_NORMAL')
-    gases_sin_servicio = separacion_gases_clinicos('NO_APLICA')
-
-    # Crear los diccionarios para almacenar las instalaciones por tipo de establecimiento y estado de gases
-    diccionario_servicio_normal = {}
-    diccionario_sin_servicio = {}
-
-    # Llenamos los diccionarios con las instalaciones por tipo de establecimiento y estado de gases
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        diccionario_servicio_normal[tipo] = gases_normal[gases_normal['TIPO_ESTABLECIMIENTO'] == tipo]['NOMBRE_ESTABLECIMIENTO'].tolist()
-        diccionario_sin_servicio[tipo] = gases_sin_servicio[gases_sin_servicio['TIPO_ESTABLECIMIENTO'] == tipo]['NOMBRE_ESTABLECIMIENTO'].tolist()
-
-    # Preparar los datos para la tabla
-    datos = {
-        'TIPO_DE_INSTALACION': [],
-        'GASES_CLINICOS_NORMAL': [],
-        'SIN_GASES_CLINICOS': [],
-    }
-
-    # Contadores globales
-    gases_normal_total = 0
-    gases_sin_servicio_total = 0
-
-    # Llenamos los datos con los totales por tipo de instalación
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        gases_normal_tipo = len(diccionario_servicio_normal[tipo])
-        gases_sin_servicio_tipo = len(diccionario_sin_servicio[tipo])
-
-        datos['TIPO_DE_INSTALACION'].append(tipo)
-        datos['GASES_CLINICOS_NORMAL'].append(gases_normal_tipo)
-        gases_normal_total += gases_normal_tipo
-        datos['SIN_GASES_CLINICOS'].append(gases_sin_servicio_tipo)
-        gases_sin_servicio_total += gases_sin_servicio_tipo
-
-    # Convertir los datos a un DataFrame
-    df_gases = pd.DataFrame(datos)
-    diccionario = {}
-    tabla_html = df_gases.to_html(classes="table table-striped", index=False)
-    diccionario['principalGases'] = tabla_html
-    return diccionario
-
-def crear_tabla_energia(archivo):
-    # Configuración para mostrar todas las filas y columnas
-    pd.set_option('display.max_rows', None)  # Muestra todas las filas
-    pd.set_option('display.max_columns', None)  # Muestra todas las columnas
-
-    # Cargar el archivo Excel
-
-
-    # Filtrar los datos por el rango de horas especificado
-
-
-
-
-    # Crear columna para clasificar los tipos de establecimientos
-    archivo['TIPO_ESTABLECIMIENTO'] = archivo['NOMBRE_ESTABLECIMIENTO'].str.extract(
-        '(HOSPITAL|POSTA|SUR|SAR|SAPU|CENTRO|MODULO)', expand=False)
-
-    # Función para filtrar según el estado de energía
-    def separacion_energia(estado_energia):
-        data = {
-            'ID_EDAN': [],
-            'NOMBRE_ESTABLECIMIENTO': [],
-            'TIPO_ESTABLECIMIENTO': [],
-            'ENERGIA': [],
-        }
-        for _, raw in archivo.iterrows():
-            edan = raw['ID_EDAN']
-            nombre = raw['NOMBRE_ESTABLECIMIENTO']
-            tipo = raw['TIPO_ESTABLECIMIENTO']
-            energia = raw['ENERGIA']
-
-            if estado_energia in energia:
-                data['ID_EDAN'].append(edan)
-                data['NOMBRE_ESTABLECIMIENTO'].append(nombre)
-                data['TIPO_ESTABLECIMIENTO'].append(tipo)
-                data['ENERGIA'].append(energia)
-
-        datos = pd.DataFrame(data)
-        return datos
-
-    # Filtrar los datos para las dos categorías de energía
-    energia_normal = separacion_energia('SERVICIO_NORMAL')
-    energia_sin_servicio = separacion_energia('SIN_SERVICIO')
-
-    # Crear los diccionarios para almacenar las instalaciones por tipo de establecimiento y estado de energía
-    diccionario_servicio_normal = {}
-    diccionario_sin_servicio = {}
-
-    # Llenamos los diccionarios con las instalaciones por tipo de establecimiento y estado de energía
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        diccionario_servicio_normal[tipo] = energia_normal[energia_normal['TIPO_ESTABLECIMIENTO'] == tipo]['NOMBRE_ESTABLECIMIENTO'].tolist()
-        diccionario_sin_servicio[tipo] = energia_sin_servicio[energia_sin_servicio['TIPO_ESTABLECIMIENTO'] == tipo]['NOMBRE_ESTABLECIMIENTO'].tolist()
-
-    # Preparar los datos para la tabla
-    datos = {
-        'Tipo de Instalación': [],
-        'Energía Normal': [],
-        'Sin Energía': [],
-    }
-
-    # Contadores globales
-    energia_normal_total = 0
-    energia_sin_servicio_total = 0
-
-    # Llenamos los datos con los totales por tipo de instalación
-    for tipo in archivo['TIPO_ESTABLECIMIENTO'].unique():
-        energia_normal_tipo = len(diccionario_servicio_normal[tipo])
-        energia_sin_servicio_tipo = len(diccionario_sin_servicio[tipo])
-
-        datos['Tipo de Instalación'].append(tipo)
-        datos['Energía Normal'].append(energia_normal_tipo)
-        energia_normal_total += energia_normal_tipo
-        datos['Sin Energía'].append(energia_sin_servicio_tipo)
-        energia_sin_servicio_total += energia_sin_servicio_tipo
-
-    # Convertir los datos a un DataFrame
-    df_energia = pd.DataFrame(datos)
-    diccionario = {}
-    tabla_html = df_energia.to_html(classes="table table-striped", index=False)
-    diccionario['principalEnergia'] = tabla_html
-    return diccionario
-columna_de_interes = "PABELLONES"
-
-
-
-
-hospital_diccionario_operativos = {f'{columna_de_interes} hospital': []}
-hospital_diccionario_no_operativos = {f'{columna_de_interes} hospital': []}
-hospital_diccionario_semi_operativos = {f'{columna_de_interes} hospital': []}
-
-centro_diccionario_operativos = {f'{columna_de_interes} centro': []}
-centro_diccionario_no_operativos = {f'{columna_de_interes} centro': []}
-centro_diccionario_semi_operativos = {f'{columna_de_interes} centro': []}
-
-comunitario_diccionario_operativos = {f'{columna_de_interes} comunitario': []}
-comunitario_diccionario_no_operativos = {f'{columna_de_interes} comunitario': []}
-comunitario_diccionario_semi_operativos = {f'{columna_de_interes} comunitario': []}
-
-psr_diccionario_operativos = {f'{columna_de_interes} psr': []}
-psr_diccionario_no_operativos = {f'{columna_de_interes} psr': []}
-psr_diccionario_semi_operativos = {f'{columna_de_interes} psr': []}
-
-csmc_diccionario_operativos = {f'{columna_de_interes} csmc': []}
-csmc_diccionario_no_operativos = {f'{columna_de_interes} csmc': []}
-csmc_diccionario_semi_operativos = {f'{columna_de_interes} csmc': []}
-
-sur_diccionario_operativos = {f'{columna_de_interes} sur': []}
-sur_diccionario_no_operativos = {f'{columna_de_interes} sur': []}
-sur_diccionario_semi_operativos = {f'{columna_de_interes} sur': []}
-
-sar_diccionario_operativos = {f'{columna_de_interes} sar': []}
-sar_diccionario_no_operativos = {f'{columna_de_interes} sar': []}
-sar_diccionario_semi_operativos = {f'{columna_de_interes} sar': []}
-
-sapu_diccionario_operativos = {f'{columna_de_interes} sapu': []}
-sapu_diccionario_no_operativos = {f'{columna_de_interes} sapu': []}
-sapu_diccionario_semi_operativos = {f'{columna_de_interes} sapu': []}
-
-hospital_contador_operativos = 0
-hospital_contador_no_operativos = 0
-hospital_contador_semi_operativos = 0
-
-centro_contador_operativos = 0
-centro_contador_no_operativos = 0
-centro_contador_semi_operativos = 0
-
-comunitario_contador_operativos = 0
-comunitario_contador_no_operativos = 0
-comunitario_contador_semi_operativos = 0
-
-psr_contador_operativos = 0
-psr_contador_no_operativos = 0
-psr_contador_semi_operativos = 0
-
-csmc_contador_operativos = 0
-csmc_contador_no_operativos = 0
-csmc_contador_semi_operativos = 0
-
-sur_contador_operativos = 0
-sur_contador_no_operativos = 0
-sur_contador_semi_operativos = 0
-
-sar_contador_operativos = 0
-sar_contador_no_operativos = 0
-sar_contador_semi_operativos = 0
-
-sapu_contador_operativos = 0
-sapu_contador_no_operativos = 0
-sapu_contador_semi_operativos = 0
-def crear_tabla_pabellones(archivo):
-  pd.set_option('display.max_rows', None)  # Muestra todas las filas
-  pd.set_option('display.max_columns', None)  # Muestra todas las columnas
-
-  data = []
-
-
-  def separacion_instalaciones(tipoDeInstalacion):
-      data = {
-          'ID_EDAN': [],
-          'NOMBRE_ESTABLECIMIENTO': [],
-          'COMUNA': [],
-          f'{columna_de_interes}': [],
-      }
-      for _, raw in archivo.iterrows():
-
-          edan = raw['ID_EDAN']
-          nombre = raw['NOMBRE_ESTABLECIMIENTO']
-          comuna = raw['COMUNA']
-          operatividad = raw[f'{columna_de_interes}']
-          tipo = tipoDeInstalacion
-
-          if tipo in nombre:
-              data['ID_EDAN'].append(edan)
-              data['NOMBRE_ESTABLECIMIENTO'].append(nombre)
-              data['COMUNA'].append(comuna)
-              data[f'{columna_de_interes}'].append(operatividad)
-
-      datos = pd.DataFrame(data)
-      return datos
-  hospital=separacion_instalaciones('HOSPITAL')
-  centro=separacion_instalaciones('CENTRO_DE_SALUD_FAMILIAR')
-  comunitario=separacion_instalaciones('CENTRO_COMUNITARIO_DE_SALUD_FAMILIAR')
-  psr=separacion_instalaciones('POSTA_DE_SALUD_RURAL')
-  csmc=separacion_instalaciones('CENTRO_DE_SALUD_MENTAL_COMUNITARIO')
-  sur=separacion_instalaciones('SUR')
-  sar=separacion_instalaciones('SAR')
-  sapu=separacion_instalaciones('SAPU')
-
-  datos = {
-      'Tipo de Establecimientos': [],
-      'Operativos': [],
-      'No Operativos': [],
-      'Semi Operativos': [],
-  }
-
-
-  def recolectar_datos_establecimientos(nombre):
-    global hospital_contador_operativos, hospital_contador_no_operativos, hospital_contador_semi_operativos, hospital_diccionario_operativos, hospital_diccionario_no_operativos, hospital_diccionario_semi_operativos
-    global centro_contador_operativos, centro_contador_no_operativos, centro_contador_semi_operativos, centro_diccionario_operativos, centro_diccionario_no_operativos, centro_diccionario_semi_operativos
-    global comunitario_contador_operativos, comunitario_contador_no_operativos, comunitario_contador_semi_operativos, comunitario_diccionario_operativos, comunitario_diccionario_no_operativos, comunitario_diccionario_semi_operativos
-    global psr_contador_operativos, psr_contador_no_operativos, psr_contador_semi_operativos, psr_diccionario_operativos, psr_diccionario_no_operativos, psr_diccionario_semi_operativos
-    global csmc_contador_operativos, csmc_contador_no_operativos, csmc_contador_semi_operativos, csmc_diccionario_operativos, csmc_diccionario_no_operativos, csmc_diccionario_semi_operativos
-    global sur_contador_operativos, sur_contador_no_operativos, sur_contador_semi_operativos, sur_diccionario_operativos, sur_diccionario_no_operativos, sur_diccionario_semi_operativos
-    global sar_contador_operativos, sar_contador_no_operativos, sar_contador_semi_operativos, sar_diccionario_operativos, sar_diccionario_no_operativos, sar_diccionario_semi_operativos
-    global sapu_contador_operativos, sapu_contador_no_operativos, sapu_contador_semi_operativos, sapu_diccionario_operativos, sapu_diccionario_no_operativos, sapu_diccionario_semi_operativos
-
-
-
-    for _, raw in nombre.iterrows():
-
-      if raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_operativos+=1
-        hospital_diccionario_operativos[f'{columna_de_interes} hospital'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_no_operativos+=1
-        hospital_diccionario_no_operativos[f'{columna_de_interes} hospital'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'HOSPITAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        hospital_contador_semi_operativos+=1
-        hospital_diccionario_semi_operativos[f'{columna_de_interes} hospital'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_operativos+=1
-        centro_diccionario_operativos[f'{columna_de_interes} centro'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_no_operativos+=1
-        centro_diccionario_no_operativos[f'{columna_de_interes} centro'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'CENTRO_DE_SALUD_FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        centro_contador_semi_operativos+=1
-        centro_diccionario_semi_operativos[f'{columna_de_interes} centro'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'CENTRO COMUNITARIO DE SALUD FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_operativos+=1
-        comunitario_diccionario_operativos[f'{columna_de_interes} comunitario'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'CENTRO COMUNITARIO DE SALUD FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_no_operativos+=1
-        comunitario_diccionario_no_operativos[f'{columna_de_interes} comunitario'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'CENTRO COMUNITARIO DE SALUD FAMILIAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        comunitario_contador_semi_operativos+=1
-        comunitario_diccionario_semi_operativos[f'{columna_de_interes} comunitario'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_operativos+=1
-        psr_diccionario_operativos[f'{columna_de_interes} psr'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_no_operativos+=1
-        psr_diccionario_no_operativos[f'{columna_de_interes} psr'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'POSTA_DE_SALUD_RURAL' in raw['NOMBRE_ESTABLECIMIENTO']:
-        psr_contador_semi_operativos+=1
-        psr_diccionario_semi_operativos[f'{columna_de_interes} psr'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_operativos+=1
-        sur_diccionario_operativos[f'{columna_de_interes} sur'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_no_operativos+=1
-        sur_diccionario_no_operativos[f'{columna_de_interes} sur'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'SUR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sur_contador_semi_operativos+=1
-        sur_diccionario_semi_operativos[f'{columna_de_interes} sur'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_operativos+=1
-        sar_diccionario_operativos[f'{columna_de_interes} sar'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_no_operativos+=1
-        sar_diccionario_no_operativos[f'{columna_de_interes} sar'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'SAR' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sar_contador_semi_operativos+=1
-        sar_diccionario_semi_operativos[f'{columna_de_interes} sar'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_operativos+=1
-        sapu_diccionario_operativos[f'{columna_de_interes} sapu'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'NO_OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_no_operativos+=1
-        sapu_diccionario_no_operativos[f'{columna_de_interes} sapu'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-      elif raw[f'{columna_de_interes}'] == 'SEMI_OPERATIVO' and 'SAPU' in raw['NOMBRE_ESTABLECIMIENTO']:
-        sapu_contador_semi_operativos+=1
-        sapu_diccionario_semi_operativos[f'{columna_de_interes} sapu'].append(raw['NOMBRE_ESTABLECIMIENTO'])
-    return None
-  recolectar_datos_establecimientos(hospital)
-  print(hospital_contador_operativos)
-  recolectar_datos_establecimientos(centro)
-  recolectar_datos_establecimientos(comunitario)
-  recolectar_datos_establecimientos(psr)
-  recolectar_datos_establecimientos(sur)
-  recolectar_datos_establecimientos(sar)
-  recolectar_datos_establecimientos(sapu)
-  datos['Tipo de Establecimientos'].append('Hospital')
-  datos['Operativos'].append(hospital_contador_operativos)
-  datos['No Operativos'].append(hospital_contador_no_operativos)
-  datos['Semi Operativos'].append(hospital_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Centro de Salud Familiar')
-  datos['Operativos'].append(centro_contador_operativos)
-  datos['No Operativos'].append(centro_contador_no_operativos)
-  datos['Semi Operativos'].append(centro_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Centro Comunitario de Salud Familiar')
-  datos['Operativos'].append(comunitario_contador_operativos)
-  datos['No Operativos'].append(comunitario_contador_no_operativos)
-  datos['Semi Operativos'].append(comunitario_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('Posta de Salud Rural')
-  datos['Operativos'].append(psr_contador_operativos)
-  datos['No Operativos'].append(psr_contador_no_operativos)
-  datos['Semi Operativos'].append(psr_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SUR')
-  datos['Operativos'].append(sur_contador_operativos)
-  datos['No Operativos'].append(sur_contador_no_operativos)
-  datos['Semi Operativos'].append(sur_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SAR')
-  datos['Operativos'].append(sar_contador_operativos)
-  datos['No Operativos'].append(sar_contador_no_operativos)
-  datos['Semi Operativos'].append(sar_contador_semi_operativos)
-  datos['Tipo de Establecimientos'].append('SAPU')
-  datos['Operativos'].append(sapu_contador_operativos)
-  datos['No Operativos'].append(sapu_contador_no_operativos)
-  datos['Semi Operativos'].append(sapu_contador_semi_operativos)
-  tabla = pd.DataFrame(datos)
-  diccionario = {}
-  tabla_html = tabla.to_html(classes="table table-striped", index=False)
-  diccionario['principalPabellones'] = tabla_html
-  return diccionario
 
 def tabla_operatividad(archivo):
     try:
@@ -1089,7 +232,10 @@ def obtener_tipo(NOMBRE_ESTABLECIMIENTO):
         return 'TIPO_NO_ESPECIFICADO'
     
 def delete_uploaded_files():
-    upload_folder = 'uploads'
+    upload_folder = os.path.join(os.path.dirname(__file__), 'uploads')
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)  # Crear la carpeta si no existe
+
     files = glob.glob(os.path.join(upload_folder, '*'))
     for file in files:
         try:
@@ -1180,7 +326,7 @@ def upload_file():
             custom_df = pd.concat([custom_df, df], ignore_index=True)
 
         custom_df_original = custom_df.copy()
-
+        df = pd.read_excel('EDAN.xlsx')
         # Generar tablas y almacenarlas en la sesión
         tablas_Operatividad = tabla_operatividad(custom_df) if tablaOperatividad else {}
         tablasAfectacionC = tablaAfectacionComuna(custom_df) if tablaAfectacionC else {} #({}, {})
@@ -1190,6 +336,21 @@ def upload_file():
         tabla_vias = crear_tabla_vias_acceso(custom_df) if tablaAfectacionC else {}
         tabla_provincia = crear_tabla_provincia(custom_df) if tablaAfectacionC else {}
         tabla_bodegas = crear_tabla_bodegas(custom_df) if tablaAfectacionC else {}
+        tabla_urgencias = crear_tabla_urgencia(custom_df) if tablaAfectacionC else {}
+        tabla_alcantarillado = crear_tabla_alcantarillado(custom_df) if tablaAfectacionC else {}
+        tabla_agua = crear_tabla_agua(custom_df) if tablaAfectacionC else {}
+        tabla_vehiculos = crear_tabla_vehiculos(custom_df) if tablaAfectacionC else {}
+        tabla_boxes = crear_tabla_boxes(custom_df) if tablaAfectacionC else {}
+        tabla_sapu = crear_tabla_sapu(custom_df) if tablaAfectacionC else {}
+        tabla_servicios = crear_tabla_servicios(custom_df) if tablaAfectacionC else {}
+        tabla_medicamentos = crear_tabla_medicamentos(custom_df) if tablaAfectacionC else {}
+        tabla_farmacia = crear_tabla_farmacia(custom_df) if tablaAfectacionC else {}
+        tabla_rrhh = crear_tabla_rrhh(custom_df) if tablaAfectacionC else {}
+        tabla_teleco = crear_tabla_teleco(custom_df) if tablaAfectacionC else {}
+        tabla_vacunas = crear_tabla_vacunatorios(custom_df) if tablaAfectacionC else {}
+        tabla_camas = crear_tabla_camas(custom_df) if tablaAfectacionC else {}
+        tabla_UPC = crear_tabla_UPC(custom_df) if tablaAfectacionC else {}
+        
         
         
         session['tablas'] = (tabla_pabellones)
@@ -1197,11 +358,29 @@ def upload_file():
         session['tablas'].update(tabla_gases)
         session['tablas'].update(tabla_vias)
         session['tablas'].update(tabla_bodegas)
+        session['tablas'].update(tabla_urgencias)
         session['tablas'].update(tablasAfectacionC)
         session['tablas'].update(tabla_provincia)
         session['tablas'].update(tablas_Operatividad)
+        session['tablas'].update(tabla_alcantarillado)
+        session['tablas'].update(tabla_agua)
+        session['tablas'].update(tabla_vehiculos)
+        session['tablas'].update(tabla_boxes)
+        session['tablas'].update(tabla_sapu)
+        session['tablas'].update(tabla_servicios)
+        session['tablas'].update(tabla_medicamentos)
+        session['tablas'].update(tabla_farmacia)
+        session['tablas'].update(tabla_rrhh)
+        session['tablas'].update(tabla_teleco)
+        session['tablas'].update(tabla_vacunas)
+        session['tablas'].update(tabla_camas)
+        session['tablas'].update(tabla_UPC)
         session.modified = True  # 🔥 Fuerza a Flask a guardar la sesión
-        listaTablas = [tablaOperatividad,tablaAfectacionC,tabla_pabellones, tabla_energia, tabla_gases, tabla_vias, tabla_provincia, tabla_bodegas]
+        listaTablas = [tablaOperatividad,tablaAfectacionC,tabla_pabellones, tabla_energia, tabla_gases, 
+                       tabla_vias, tabla_provincia, tabla_bodegas,tabla_urgencias,
+                       tabla_alcantarillado,tabla_agua,tabla_vehiculos, tabla_boxes, tabla_sapu, 
+                       tabla_servicios, tabla_medicamentos, tabla_farmacia, tabla_rrhh, 
+                       tabla_teleco, tabla_vacunas, tabla_camas, tabla_UPC]
         tablaContainer = any(listaTablas)
         tablasPrincipales = [clave for clave in session.get('tablas',{}).keys() if 'principal' in clave]
         # print(tablasAfectacionC.keys())
@@ -1219,7 +398,7 @@ def upload_file():
 def get_table():
     try:
         table_name = request.args.get('table_name')
-        # print("Tablas en sesión:", session.get('tablas', {}).keys())  # 🔥 Ver qué tablas existen
+        #print("Tablas en sesión:", session.get('tablas', {}).keys())  # 🔥 Ver qué tablas existen
         if not table_name:
             return jsonify({"error": "Nombre de la tabla no proporcionado."}), 400
 
