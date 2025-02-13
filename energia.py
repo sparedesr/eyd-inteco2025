@@ -2,6 +2,7 @@ import pandas as pd
 
 def crear_tabla_energia(archivo):
     try:
+        nuevo = 0
         tipos_operatividad = ['SERVICIO_NORMAL', 'SERVICIO_INTERMITENTE', 'SIN_SERVICIO']
         df_operativos = archivo[archivo['ENERGIA'].isin(tipos_operatividad)]
 
